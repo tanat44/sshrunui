@@ -1,21 +1,21 @@
-import {
-  Button,
-  Container,
-  Stack,
-  Text,
-  Textarea,
-  TextInput,
-} from "@mantine/core";
+import { Button, Stack, Textarea, TextInput } from "@mantine/core";
 import React, { useEffect, useState } from "react";
+import { Page } from "../page";
 
-export function Main() {
+export function Ssh() {
   const [outputText, setOutputText] = useState("--no output--");
 
   useEffect(() => {
+    console.log((window as any).electronAPI);
+
     (window as any).electronAPI.onShellOutput((value: string) => {
       setOutputText(value);
     });
   }, []);
+
+  async function start() {
+    (window as any).electronAPI.startShell();
+  }
 
   async function run() {
     const output = await (window as any).electronAPI.runShellCommand();
@@ -23,16 +23,9 @@ export function Main() {
   }
 
   return (
-    <Container>
-      <Text
-        size="xl"
-        fw={900}
-        variant="gradient"
-        gradient={{ from: "blue", to: "cyan", deg: 90 }}
-      >
-        sshrunui
-      </Text>
+    <Page title="ssh">
       <Stack>
+        <Button onClick={start}>Start</Button>
         <TextInput
           label="Input command"
           placeholder="ls"
@@ -46,8 +39,11 @@ export function Main() {
           minRows={10}
           maxRows={50}
           value={outputText}
+          styles={{
+            input: { fontFamily: "Lucida Console, Courier, monospace" },
+          }}
         />
       </Stack>
-    </Container>
+    </Page>
   );
 }

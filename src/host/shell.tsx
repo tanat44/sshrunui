@@ -1,22 +1,36 @@
 import { spawn } from "child_process";
 import { IpcMainInvokeEvent } from "electron";
 
-export async function runShellCommand(e: IpcMainInvokeEvent, command: string) {
-  const child = spawn("ls", ["-lh", "/usr"]);
+export async function startShell(e: IpcMainInvokeEvent, command: string) {
+  // if (shellProcess) return;
+  // const isWin = process.platform === "win32";
+  let shellProcess = spawn("ls", ["-la"]);
 
-  // use child.stdout.setEncoding('utf8'); if you want text chunks
-  // child.stdout.on("data", (chunk) => {
-  //   console.log(chunk);
-  //   chunk.pipe(process.stdout);
-  //   // data from standard output is here as buffers
+  shellProcess.stdout.pipe(process.stdout);
+  // shellProcess.stdout.on("data", (chunk) => {
+  //   e.sender.send("shellOutput", Buffer.from(chunk).toString());
   // });
 
-  child.stdout.pipe(process.stdout);
+  shellProcess.on("close", (code) => {
+    shellProcess = undefined;
+    console.log(`Child process exited with code ${code}.`);
+  });
+}
 
-  // since these are streams, you can pipe them elsewhere
+export async function runShellCommand(e: IpcMainInvokeEvent, command: string) {
+  const commands: string[] = ["ls", "-la"];
+
+  const isWin = process.platform === "win32";
+  const child = isWin
+    ? spawn("wsl", commands)
+    : spawn(commands[0], commands.splice(1));
+
+  // use child.stdout.setEncoding('utf8'); if you want text chunks
+  child.stdout.on("data", (chunk) => {
+    e.sender.send("shellOutput", Buffer.from(chunk).toString());
+  });
+
   child.stderr.pipe(process.stdout);
-
-  e.sender.send("shellOutput", "hello from shell");
 
   child.on("close", (code) => {
     console.log(`child process exited with code ${code}`);

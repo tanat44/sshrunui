@@ -4,6 +4,7 @@
 import { contextBridge, ipcRenderer } from "electron";
 
 contextBridge.exposeInMainWorld("electronAPI", {
+  startShell: () => ipcRenderer.send("startShell"),
   runShellCommand: () => ipcRenderer.invoke("runShellCommand"),
   onShellOutput: (callback: any) =>
     ipcRenderer.on("shellOutput", (_event, value) => callback(value)),
